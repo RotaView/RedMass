@@ -1,446 +1,430 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="./Estilo.css">
-    <title>RedMass</title>
+
+    <title>Te expropie bb</title>
+  
 </head>
+
 <body>
-    
-
-
-<script src=" https://cdnjs.cloudflare.com/ajax/libs/phaser-ce/2.16.1/phaser.min.js"></script>
-<script>
-//CANVAS---------
-var game = new Phaser.Game(625, 1000, Phaser.CANVAS, 'phaser-example', { preload: preload, create: create, update: update });
-
-
-//--Cargar googleWebFonts--
-WebFontConfig = {
-active: function() { game.time.events.add(Phaser.Timer.SECOND, createText, this); },
-google: {
-  families: ['Press Start 2P']
-}
-};
-//--Fin Cargar googleWebFonts--
-
-//FUNCION PRELOAD----------
-function preload() 
-{
-    game.load.spritesheet('dude', './Sprites/RedMassV1.png', 50, 50); //sprites del personaje principal
-    game.load.image('Fondo', './Sprites/Fondo1.png');
-    game.load.image('plataforma', './Sprites/PlataformaV1.png'); //Sprite de la plataforma
-    game.load.image('plataformaP', './Sprites/PlataformaPinchosV1.png'); //Sprite plataforma con pinchos
-    game.load.image('corazon', './Sprites/corazonV2.png'); //Sprite de los corazones
-    game.load.image('puasabajo', './Sprites/puasabajoV1.png'); //Sprite de las puas de abajo
-    game.load.image('puasarriba', './Sprites/puasarribaV1.png'); //Sprite de los las puas de arriba
-    game.load.image('cabecera', './Sprites/cabeceraV2.png');
-    game.load.image('cabecera2', './Sprites/cabezera2V1.png');
-
-    game.load.audio('Music4', './Sounds/vida.wav');
-    game.load.audio('Music3', './Sounds/explosion.wav');
-    game.load.audio('Music2', './Sounds/hit.wav');
-    game.load.audio('Music', './Sounds/Music.mp3');
-
-    game.load.spritesheet('button', './Sprites/button_sprite_sheetV2.png', 192, 71);
-    game.load.image('namegame', './Sprites/nombregame.png');
-    game.load.image('gameOverLetrero', './Sprites/GameOver2.png');
-
-    game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
-}
-
-//DECLARAR VARIABLES----------
-var Fondo;
-var player;
-var cursors;
-var facing = 'turn';
-var velocidadPersonaje=400;
-var gravedadPersonaje=0;
-var velocidadPlataformas=300;
-var vidasCount=3;
-
-var plataformas;
-var plataforma;
-var plataformaTime=0;
-var posicionPlataformaX=0;
-var aparicionPlataformasY=0;
-
-var plataformasP;
-var plataformaP;
-var plataformaTimeP=0;
-var posicionPlataformaXP=0;
-var aparicionPlataformasYP=0;
-
-var corazons;
-var corazon;
-
-var puasabajo;
-var puasarriba;
-var puasabajos;
-var puasarribas;
-
-var boton1;
-var nombreJuego;
-var gameOverLetrero;
-var cabecera;
-var cabecera2;
-
-var tocando=0;
-
-var music;
-var music2;
-var music3;
-var music4;
-
-var empezarreal=0;
-
-var contador=0;
-var text=null;
-var text2=null;
-
-//FUNCION CREATE----------
-function create() 
-{
-    game.physics.startSystem(Phaser.Physics.ARCADE); //Prender fisicas arcade
-    //game.physics.arcade.gravity.y = 250; //gravedad global
-    game.stage.backgroundColor = '#AFEEEE'; //color de el fondo de el canvas
-
-    Fondo = game.add.image(0, 0, 'Fondo');//FONDO
-
-    player = game.add.sprite(312, 300, 'dude'); //añadimos el personaje y su posicion inicial
-    game.physics.enable(player, Phaser.Physics.ARCADE); //le ponemos fisicas arcade al personaje
-    player.body.gravity.y=gravedadPersonaje; //gravedad del personaje
-    player.body.collideWorldBounds = true; //hacer que el personaje colicione con los bordes del canvas
-    //player.body.setSize(32, 32, 5, 16); //colider del personaje
-    player.animations.add('left', [6, 8, 9], 10, true); //animacion del personaje corriendo a la izquierda
-    player.animations.add('right', [2, 4, 5], 10, true); //animacion del personaje corriendo a la derecha
-    player.animations.add('downLeft', [1], 10, true); //animacion del personaje cayendo a la izquierda
-    player.animations.add('downRight', [0], 10, true); //animacion del personaje cayendo a la derecha
-    player.animations.add('death', [3,10], 10, true); //animacion del personaje Muerto
-    player.animations.add('turn', [6], 20, true);
-    player.visible=false;
-    cursors = game.input.keyboard.createCursorKeys(); //cursors (Flechitas)
-
-    //--Sonidos--
-    music = game.add.audio('Music');
-    music.loop=true;
-    music2 = game.add.audio('Music2');
-    music3 = game.add.audio('Music3');
-    music4 = game.add.audio('Music4');
-    //--Fin Sonidos--
-
-    //-Botones--
-    nombreJuego = game.add.image(0, game.world.centerY-400, 'namegame');
-    boton1 = game.add.button(game.world.centerX - 95, 460, 'button', empezar, this, 2, 1, 0);
-    boton1.input.useHandCursor = true;
-    //-Fin Botones--
-
-    //--Grupo plataformas--
-    plataformas = game.add.physicsGroup();
-    for (var i = 0; i < 20; i++)
-    {
-        var b = plataformas.create(0, 0, 'plataforma');
-        b.name = 'plataforma' + i;
-        b.exists = false;
-        b.visible = false;
-        b.checkWorldBounds = true;
-        b.events.onOutOfBounds.add(resetPlataforma, this);
-    }
-    plataformas.setAll('body.immovable', true);
-    //--Fin Grupo plataformas--
-
-    //--Grupo plataformas con pinchos--
-    plataformasP = game.add.physicsGroup();
-    for (var i = 0; i < 10; i++)
-    {
-        var c = plataformasP.create(0, 0, 'plataformaP');
-        c.name = 'plataformaP' + i;
-        c.exists = false;
-        c.visible = false;
-        c.checkWorldBounds = true;
-        c.events.onOutOfBounds.add(resetPlataformaP, this);
-    }
-    plataformasP.setAll('body.immovable', true);
-    //--Fin Grupo plataformas con pinchos--
-
-    //--Grupo corazones--
-    corazons = game.add.physicsGroup();
-    for (var i = 0; i < 1; i++)
-    {
-        var d = corazons.create(0, 0, 'corazon');
-        d.name = 'corazon' + i;
-        d.exists = false;
-        d.visible = false;
-        d.checkWorldBounds = true;
-        d.events.onOutOfBounds.add(resetCorazon, this);
-    }
-    corazons.setAll('body.immovable', true);
-    //--Fin Grupo corazones--
-
-    //--puas de arriba--
-    puasarribas = game.add.physicsGroup();
-    puasarribas.create(0,60,'puasarriba');
-    puasarribas.setAll('body.immovable', true);
-    //--Fin puas de arriba--
-
-    //--puas de abajo--
-    puasabajos = game.add.physicsGroup();
-    puasabajos.create(0,979,'puasabajo');
-    puasabajos.setAll('body.immovable', true);
-    //--Fin puas de arriba--
-
-    //--Intefaz--
-    cabecera = game.add.image(0, 0, 'cabecera');
-    cabecera2 = game.add.image(0, 0, 'cabecera2');
-    text = game.add.text(620, 62, contador);
-    text.anchor.setTo(1);
-    text.font = 'Press Start 2P';
-    text.fontSize = 40;
-    text2 = game.add.text(140, 62, vidasCount);
-    text2.anchor.setTo(1);
-    text2.font = 'Press Start 2P';
-    text2.fontSize = 40;
-    //--Fin Intefaz--
-
-    //-letrero Game Over--
-    gameOverLetrero = game.add.image(0, game.world.centerY-400, 'gameOverLetrero');
-    gameOverLetrero.visible=false;
-    //-Fin letrero Game Over--
-    
-    
-}
-
-
-//FUNCION UPDATE----------
-function update() 
-{
-    if(empezarreal==1){
-
-    if(vidasCount!=0){
-        contador=contador+1;
-        gravedadPersonaje=1000;
-        player.body.gravity.y=gravedadPersonaje;
-    }
-    text.text=contador;
-    text2.text=vidasCount;
 
 
 
-    
-    //console.log(velocidadPlataformas);
-    //console.log(vidasCount);
-    console.log(contador);
+    <script src=" https://cdnjs.cloudflare.com/ajax/libs/phaser-ce/2.16.1/phaser.min.js"></script>
+    <script>
+        //CANVAS---------
+        var game = new Phaser.Game(625, 1000, Phaser.CANVAS, 'phaser-example', { preload: preload, create: create, update: update });
 
-    //--Colisiones--
-    if(vidasCount!=0){
-        
-    game.physics.arcade.collide(player, plataformas, colisionando, null, this);
-    game.physics.arcade.overlap(plataformasP, plataformas, resetPlataformaP, null, this); //Evitar que las plataformas se superpongan
-    game.physics.arcade.overlap(plataformasP, corazons, resetPlataformaP, null, this); //Evitar que los pinchos se superpongan con los corazones
-    game.physics.arcade.overlap(player, corazons, sumarVida, null, this);
-    game.physics.arcade.overlap(player, plataformasP, muerte, null, this);
-    game.physics.arcade.overlap(player, puasarribas, muerte2, null, this);
-    game.physics.arcade.overlap(player, puasabajos, muerte2, null, this);
-    }
-    //--Fin Colisiones--
 
-    //--actualizacion variables--
-    velocidadPlataformas=velocidadPlataformas+0.05;
-    posicionPlataformaX = Math.random() * (484 - 0) + 0;
-    aparicionPlataformasY = Math.random() * (1000 - 400) + 400;
-    posicionPlataformaXP = Math.random() * (484 - 0) + 0;
-    aparicionPlataformasYP = Math.random() * (3000 - 1500) + 1500;
-    if(vidasCount==0){
-        velocidadPlataformas=0;
-        player.body.velocity.y = 0;
-    }
-    //--Fin actualizacion variables--
-
-    player.body.velocity.x = 0; //Dejar quieto al personaje (Evita que se deslice)
-    
-    //---CONTROLES PERSONAJE--
-    if(vidasCount!=0){
-
-            if (cursors.left.isDown)
-            {
-            
-                player.body.velocity.x = -1*velocidadPersonaje;
-
-                if (facing != 'left')
-                {
-                    player.animations.play('left');
-                    facing = 'left';
-                }
-                
+        //--Cargar googleWebFonts--
+        WebFontConfig = {
+            active: function () { game.time.events.add(Phaser.Timer.SECOND, createText, this); },
+            google: {
+                families: ['Press Start 2P']
             }
-            else if (cursors.left.isDown)
-            {
-                player.body.velocity.x = -1*velocidadPersonaje;
+        };
+        //--Fin Cargar googleWebFonts--
 
-                if (facing != 'left')
-                {
-                    player.animations.play('downLeft');
-                    facing = 'left';
-                }
+        //FUNCION PRELOAD----------
+        function preload() {
+            game.load.spritesheet('dude', './Sprites/RedMassV1.png', 50, 50); //sprites del personaje principal
+            game.load.image('Fondo', './Sprites/Fondo1.png');
+            game.load.image('plataforma', './Sprites/PlataformaV1.png'); //Sprite de la plataforma
+            game.load.image('plataformaP', './Sprites/PlataformaPinchosV1.png'); //Sprite plataforma con pinchos
+            game.load.image('corazon', './Sprites/corazonV2.png'); //Sprite de los corazones
+            game.load.image('puasabajo', './Sprites/puasabajoV1.png'); //Sprite de las puas de abajo
+            game.load.image('puasarriba', './Sprites/puasarribaV1.png'); //Sprite de los las puas de arriba
+            game.load.image('cabecera', './Sprites/cabeceraV2.png');
+            game.load.image('cabecera2', './Sprites/cabezera2V1.png');
+
+            game.load.audio('Music4', './Sounds/vida.wav');
+            game.load.audio('Music3', './Sounds/explosion.wav');
+            game.load.audio('Music2', './Sounds/hit.wav');
+            game.load.audio('Music', './Sounds/Music.mp3');
+
+            game.load.spritesheet('button', './Sprites/button_sprite_sheetV2.png', 192, 71);
+            game.load.image('namegame', './Sprites/nombregame.png');
+            game.load.image('gameOverLetrero', './Sprites/GameOver2.png');
+
+            game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
+        }
+
+        //DECLARAR VARIABLES----------
+        var Fondo;
+        var player;
+        var cursors;
+        var facing = 'turn';
+        var velocidadPersonaje = 400;
+        var gravedadPersonaje = 0;
+        var velocidadPlataformas = 300;
+        var vidasCount = 3;
+
+        var plataformas;
+        var plataforma;
+        var plataformaTime = 0;
+        var posicionPlataformaX = 0;
+        var aparicionPlataformasY = 0;
+
+        var plataformasP;
+        var plataformaP;
+        var plataformaTimeP = 0;
+        var posicionPlataformaXP = 0;
+        var aparicionPlataformasYP = 0;
+
+        var corazons;
+        var corazon;
+
+        var puasabajo;
+        var puasarriba;
+        var puasabajos;
+        var puasarribas;
+
+        var boton1;
+        var nombreJuego;
+        var gameOverLetrero;
+        var cabecera;
+        var cabecera2;
+
+        var tocando = 0;
+
+        var music;
+        var music2;
+        var music3;
+        var music4;
+
+        var empezarreal = 0;
+
+        var contador = 0;
+        var text = null;
+        var text2 = null;
+
+        //FUNCION CREATE----------
+        function create() {
+            game.physics.startSystem(Phaser.Physics.ARCADE); //Prender fisicas arcade
+            //game.physics.arcade.gravity.y = 250; //gravedad global
+            game.stage.backgroundColor = '#AFEEEE'; //color de el fondo de el canvas
+
+            Fondo = game.add.image(0, 0, 'Fondo');//FONDO
+
+            player = game.add.sprite(312, 300, 'dude'); //añadimos el personaje y su posicion inicial
+            game.physics.enable(player, Phaser.Physics.ARCADE); //le ponemos fisicas arcade al personaje
+            player.body.gravity.y = gravedadPersonaje; //gravedad del personaje
+            player.body.collideWorldBounds = true; //hacer que el personaje colicione con los bordes del canvas
+            //player.body.setSize(32, 32, 5, 16); //colider del personaje
+            player.animations.add('left', [6, 8, 9], 10, true); //animacion del personaje corriendo a la izquierda
+            player.animations.add('right', [2, 4, 5], 10, true); //animacion del personaje corriendo a la derecha
+            player.animations.add('downLeft', [1], 10, true); //animacion del personaje cayendo a la izquierda
+            player.animations.add('downRight', [0], 10, true); //animacion del personaje cayendo a la derecha
+            player.animations.add('death', [3, 10], 10, true); //animacion del personaje Muerto
+            player.animations.add('turn', [6], 20, true);
+            player.visible = false;
+            cursors = game.input.keyboard.createCursorKeys(); //cursors (Flechitas)
+
+            //--Sonidos--
+            music = game.add.audio('Music');
+            music.loop = true;
+            music2 = game.add.audio('Music2');
+            music3 = game.add.audio('Music3');
+            music4 = game.add.audio('Music4');
+            //--Fin Sonidos--
+
+            //-Botones--
+            nombreJuego = game.add.image(0, game.world.centerY - 400, 'namegame');
+            boton1 = game.add.button(game.world.centerX - 95, 460, 'button', empezar, this, 2, 1, 0);
+            boton1.input.useHandCursor = true;
+            //-Fin Botones--
+
+            //--Grupo plataformas--
+            plataformas = game.add.physicsGroup();
+            for (var i = 0; i < 20; i++) {
+                var b = plataformas.create(0, 0, 'plataforma');
+                b.name = 'plataforma' + i;
+                b.exists = false;
+                b.visible = false;
+                b.checkWorldBounds = true;
+                b.events.onOutOfBounds.add(resetPlataforma, this);
             }
-            else if (cursors.right.isDown)
-            {
-                player.body.velocity.x = velocidadPersonaje;
+            plataformas.setAll('body.immovable', true);
+            //--Fin Grupo plataformas--
 
-                if (facing != 'right')
-                {
-                    player.animations.play('right');
-                    facing = 'right';
-                }
+            //--Grupo plataformas con pinchos--
+            plataformasP = game.add.physicsGroup();
+            for (var i = 0; i < 10; i++) {
+                var c = plataformasP.create(0, 0, 'plataformaP');
+                c.name = 'plataformaP' + i;
+                c.exists = false;
+                c.visible = false;
+                c.checkWorldBounds = true;
+                c.events.onOutOfBounds.add(resetPlataformaP, this);
             }
-            else
-            {
-                if (facing != 'idle')
-                {
-                    player.animations.stop();
+            plataformasP.setAll('body.immovable', true);
+            //--Fin Grupo plataformas con pinchos--
 
-                    if (facing == 'left')
-                    {
-                        player.frame = 11;
+            //--Grupo corazones--
+            corazons = game.add.physicsGroup();
+            for (var i = 0; i < 1; i++) {
+                var d = corazons.create(0, 0, 'corazon');
+                d.name = 'corazon' + i;
+                d.exists = false;
+                d.visible = false;
+                d.checkWorldBounds = true;
+                d.events.onOutOfBounds.add(resetCorazon, this);
+            }
+            corazons.setAll('body.immovable', true);
+            //--Fin Grupo corazones--
+
+            //--puas de arriba--
+            puasarribas = game.add.physicsGroup();
+            puasarribas.create(0, 60, 'puasarriba');
+            puasarribas.setAll('body.immovable', true);
+            //--Fin puas de arriba--
+
+            //--puas de abajo--
+            puasabajos = game.add.physicsGroup();
+            puasabajos.create(0, 979, 'puasabajo');
+            puasabajos.setAll('body.immovable', true);
+            //--Fin puas de arriba--
+
+            //--Intefaz--
+            cabecera = game.add.image(0, 0, 'cabecera');
+            cabecera2 = game.add.image(0, 0, 'cabecera2');
+            text = game.add.text(620, 62, contador);
+            text.anchor.setTo(1);
+            text.font = 'Press Start 2P';
+            text.fontSize = 40;
+            text2 = game.add.text(140, 62, vidasCount);
+            text2.anchor.setTo(1);
+            text2.font = 'Press Start 2P';
+            text2.fontSize = 40;
+            //--Fin Intefaz--
+
+            //-letrero Game Over--
+            gameOverLetrero = game.add.image(0, game.world.centerY - 400, 'gameOverLetrero');
+            gameOverLetrero.visible = false;
+            //-Fin letrero Game Over--
+
+
+        }
+
+
+        //FUNCION UPDATE----------
+        function update() {
+            if (empezarreal == 1) {
+
+                if (vidasCount != 0) {
+                    contador = contador + 1;
+                    gravedadPersonaje = 1000;
+                    player.body.gravity.y = gravedadPersonaje;
+                }
+                text.text = contador;
+                text2.text = vidasCount;
+
+
+
+
+                //console.log(velocidadPlataformas);
+                //console.log(vidasCount);
+                console.log(contador);
+
+                //--Colisiones--
+                if (vidasCount != 0) {
+
+                    game.physics.arcade.collide(player, plataformas, colisionando, null, this);
+                    game.physics.arcade.overlap(plataformasP, plataformas, resetPlataformaP, null, this); //Evitar que las plataformas se superpongan
+                    game.physics.arcade.overlap(plataformasP, corazons, resetPlataformaP, null, this); //Evitar que los pinchos se superpongan con los corazones
+                    game.physics.arcade.overlap(player, corazons, sumarVida, null, this);
+                    game.physics.arcade.overlap(player, plataformasP, muerte, null, this);
+                    game.physics.arcade.overlap(player, puasarribas, muerte2, null, this);
+                    game.physics.arcade.overlap(player, puasabajos, muerte2, null, this);
+                }
+                //--Fin Colisiones--
+
+                //--actualizacion variables--
+                velocidadPlataformas = velocidadPlataformas + 0.05;
+                posicionPlataformaX = Math.random() * (484 - 0) + 0;
+                aparicionPlataformasY = Math.random() * (1000 - 400) + 400;
+                posicionPlataformaXP = Math.random() * (484 - 0) + 0;
+                aparicionPlataformasYP = Math.random() * (3000 - 1500) + 1500;
+                if (vidasCount == 0) {
+                    velocidadPlataformas = 0;
+                    player.body.velocity.y = 0;
+                }
+                //--Fin actualizacion variables--
+
+                player.body.velocity.x = 0; //Dejar quieto al personaje (Evita que se deslice)
+
+                //---CONTROLES PERSONAJE--
+                if (vidasCount != 0) {
+
+                    if (cursors.left.isDown) {
+
+                        player.body.velocity.x = -1 * velocidadPersonaje;
+
+                        if (facing != 'left') {
+                            player.animations.play('left');
+                            facing = 'left';
+                        }
+
                     }
-                    else
-                    {
-                        player.frame = 7;
+                    else if (cursors.left.isDown) {
+                        player.body.velocity.x = -1 * velocidadPersonaje;
+
+                        if (facing != 'left') {
+                            player.animations.play('downLeft');
+                            facing = 'left';
+                        }
+                    }
+                    else if (cursors.right.isDown) {
+                        player.body.velocity.x = velocidadPersonaje;
+
+                        if (facing != 'right') {
+                            player.animations.play('right');
+                            facing = 'right';
+                        }
+                    }
+                    else {
+                        if (facing != 'idle') {
+                            player.animations.stop();
+
+                            if (facing == 'left') {
+                                player.frame = 11;
+                            }
+                            else {
+                                player.frame = 7;
+                            }
+
+                            facing = 'idle';
+                        }
                     }
 
-                    facing = 'idle';
+                }
+                //---FIN CONTROLES PERSONAJE--
+
+                if (vidasCount != 0) {
+                    generarPlataforma();
+                    generarPlataformaP();
+                }
+
+                if (vidasCount == 0) {
+                    finJuego();
+                }
+
+            }
+        }
+        //DEMAS FUNCIONES----------
+
+        function resetPlataforma(plataforma) {
+            plataforma.kill();
+        }
+
+
+        function generarPlataforma() {
+            if (game.time.now > plataformaTime) {
+                plataforma = plataformas.getFirstExists(false);
+
+                if (Math.floor(Math.random() * (15 - 0) + 0) == 5) {
+                    corazon = corazons.getFirstExists(false);
+                    if (corazon) {
+                        corazon.reset((posicionPlataformaX) + (Math.random() * (112 - 0) + 0), 1000 - 28);
+                        corazon.body.velocity.y = -1 * velocidadPlataformas;
+                    }
+                }
+
+                if (plataforma) {
+                    plataforma.reset((posicionPlataformaX), 1000);
+                    plataforma.body.velocity.y = -1 * velocidadPlataformas;
+                    plataformaTime = game.time.now + aparicionPlataformasY;
                 }
             }
-        
-    }
-    //---FIN CONTROLES PERSONAJE--
-    
-    if(vidasCount!=0){
-    generarPlataforma ();
-    generarPlataformaP ();
-    }
+        }
 
-    if(vidasCount==0){
-        finJuego();
-    }
+        function resetPlataformaP(plataformaP) {
+            plataformaP.kill();
+        }
 
-}
-}
-//DEMAS FUNCIONES----------
+        function generarPlataformaP() {
+            if (game.time.now > plataformaTimeP) {
+                plataformaP = plataformasP.getFirstExists(false);
 
-function resetPlataforma (plataforma) {
-    plataforma.kill();
-}
-
-
-function generarPlataforma () {
-    if (game.time.now > plataformaTime)
-    {
-        plataforma = plataformas.getFirstExists(false);
-
-        if(Math.floor(Math.random() * (15 - 0) + 0)==5){
-        corazon = corazons.getFirstExists(false);
-            if (corazon)
-            {
-                corazon.reset( (posicionPlataformaX)+(Math.random() * (112 - 0) + 0), 1000-28);
-                corazon.body.velocity.y = -1*velocidadPlataformas;
+                if (plataformaP) {
+                    plataformaP.reset((posicionPlataformaXP), 1000);
+                    plataformaP.body.velocity.y = -1 * velocidadPlataformas;
+                    plataformaTimeP = game.time.now + aparicionPlataformasYP;
+                }
             }
         }
 
-        if (plataforma)
-        {
-            plataforma.reset( (posicionPlataformaX) , 1000);
-            plataforma.body.velocity.y = -1*velocidadPlataformas;
-            plataformaTime = game.time.now + aparicionPlataformasY;
+
+
+
+        function resetCorazon(corazon) {
+            corazon.kill();
         }
-    }
-}
 
-function resetPlataformaP (plataformaP) {
-    plataformaP.kill();
-}
-
-function generarPlataformaP () {
-    if (game.time.now > plataformaTimeP)
-    {
-        plataformaP = plataformasP.getFirstExists(false);
-
-        if (plataformaP)
-        {
-            plataformaP.reset( (posicionPlataformaXP) , 1000);
-            plataformaP.body.velocity.y = -1*velocidadPlataformas;
-            plataformaTimeP = game.time.now + aparicionPlataformasYP;
+        function muerte(player, plataformasP) {
+            if (vidasCount > 0 && vidasCount < 10)
+                vidasCount = vidasCount - 1;
+            plataformasP.kill();
+            if (vidasCount != 0) {
+                music2.play();
+            }
+            if (vidasCount == 0) {
+                gameOver = true;
+                player.animations.play('death');
+                player.body.gravity.y = 0;
+                music3.play();
+            }
         }
-    }
-}
 
+        function muerte2(player, puasarribas) {
+            if (vidasCount > 0 && vidasCount < 10)
+                vidasCount = vidasCount - 1;
+            if (vidasCount != 0) {
+                player.body.velocity.y = 0;
+                player.body.position.x = 312;
+                player.body.position.y = 300;
+                music2.play();
+            }
+            if (vidasCount == 0) {
+                player.animations.play('death');
+                player.body.gravity.y = 0;
+                music3.play();
+            }
+        }
 
+        function sumarVida(player, corazons) {
+            corazons.kill();
+            if (vidasCount < 5)
+                vidasCount = vidasCount + 1;
+            music4.play();
+        }
 
+        function colisionando(player, plataformas) {
+            tocando = 1;
+        }
 
-function resetCorazon (corazon) {
-    corazon.kill();
-}
+        function empezar() {
+            player.visible = true;
+            nombreJuego.visible = false;
+            boton1.visible = false;
+            empezarreal = 1;
+            music.play();
+        }
 
-function muerte (player, plataformasP) {
-    if(vidasCount>0&&vidasCount<10)
-    vidasCount=vidasCount-1;
-    plataformasP.kill();
-    if(vidasCount!=0){
-    music2.play();
-    }
-    if(vidasCount==0){
-    gameOver = true;
-    player.animations.play('death');
-    player.body.gravity.y=0;
-    music3.play();
-    }
-}
+        function finJuego() {
+            music.stop();
+            gameOverLetrero.visible = true;
+        }
 
-function muerte2 (player, puasarribas) {
-    if(vidasCount>0&&vidasCount<10)
-    vidasCount=vidasCount-1;
-    if(vidasCount!=0){
-    player.body.velocity.y = 0;
-    player.body.position.x=312;
-    player.body.position.y=300;
-    music2.play();
-    }
-    if(vidasCount==0){
-    player.animations.play('death');
-    player.body.gravity.y=0;
-    music3.play();
-    }
-}
-
-function sumarVida (player,corazons) {
-    corazons.kill();
-    if(vidasCount<5)
-    vidasCount=vidasCount+1;
-    music4.play();
-}
-
-function colisionando (player,plataformas) {
-tocando=1;
-}
-
-function empezar () {
-player.visible=true;
-nombreJuego.visible=false;
-boton1.visible=false;
-empezarreal=1;
-music.play();
-}
-
-function finJuego () {
-music.stop();
-gameOverLetrero.visible=true;
-}
-
-</script>
+    </script>
 
 
 
 </body>
+
 </html>
